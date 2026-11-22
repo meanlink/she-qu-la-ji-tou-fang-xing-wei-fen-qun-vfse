@@ -62,6 +62,9 @@ def resolve_move(point_id, form, actor, approve):
                 ledger.execute("UPDATE outreach_tasks SET state='obsolete' WHERE id=%s", (task['id'],))
                 ledger.audit(actor, 'outreach_obsoleted', task['id'], {'point_id': point_id, 'reason': 'relocated'})
             facts['sample_from'] = sample_from.isoformat()
+            # Deferred import: dispatch imports fieldwork helpers, so import at call time.
+            from src.dispatch import skip_pending_for_point
+            skip_pending_for_point(ledger, point_id, actor, 'point_moved', '点位已迁址，原批待派方案作废')
         ledger.execute('UPDATE disposal_points SET pending_location=NULL,migration_note=NULL WHERE id=%s', (point_id,))
         ledger.audit(actor, 'relocation_confirmed' if approve else 'relocation_cleared', point_id, facts)
         return get_point(ledger, point_id)

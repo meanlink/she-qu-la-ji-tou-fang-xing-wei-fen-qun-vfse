@@ -2,6 +2,7 @@ from fractions import Fraction
 
 from fastapi import HTTPException
 
+from src import dispatch
 from src.clustering import aggregate
 from src.contracts import TaskState
 from src.fieldwork import current_point, get_point, get_task
@@ -44,4 +45,5 @@ def review_retest(task_id, form, actor):
         ledger.execute('UPDATE outreach_tasks SET state=%s,result=%s,review_note=%s WHERE id=%s',
                        (state, encode(result), form.note, task_id))
         ledger.audit(actor, f'outreach_{state}', task_id, {'result': result, 'note': form.note})
-        return get_task(ledger, task_id)
+        topped_up = dispatch.top_up_after_task(ledger, task['point_id'], actor)
+        return {**get_task(ledger, task_id), 'topped_up_tasks': topped_up}

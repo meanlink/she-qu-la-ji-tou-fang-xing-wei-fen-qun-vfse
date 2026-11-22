@@ -42,6 +42,9 @@ export const api = {
   windows: () => call('/windows'), addWindow: data => call('/windows', data),
   runs: () => call('/runs'), run: id => call(`/runs/${id}`), requestRun: data => call('/runs', data),
   confirm: (id, data) => call(`/runs/${id}/confirm`, data),
+  dispatch: id => call(`/runs/${id}/dispatch`),
+  recomputeDispatch: (id, data) => call(`/runs/${id}/dispatch/recompute`, data),
+  topUpDispatch: (id, data) => call(`/runs/${id}/dispatch/top-up`, data),
   tasks: () => call('/tasks'), deliver: (id, data) => call(`/tasks/${id}/delivery`, data),
   review: (id, data) => call(`/tasks/${id}/review`, data),
 };

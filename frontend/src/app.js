@@ -76,7 +76,8 @@ async function refresh() {
     if (key === 'groups') {
       const [runs, windows] = await Promise.all([api.runs(), api.windows()]);
       const runId = runs.find(run => run.id === Number(params.get('run')))?.id ?? runs[0]?.id;
-      data = {runs, windows, run: runId ? await api.run(runId) : null};
+      const run = runId ? await api.run(runId) : null;
+      data = {runs, windows, run, dispatch: run?.state === 'confirmed' ? await api.dispatch(run.id) : null};
     }
     if (key === 'tasks') data = {tasks: await api.tasks()};
     if (key === 'quality') data = {quality: await api.quality()};
@@ -128,7 +129,17 @@ async function change(form, fields, submitter) {
     }
     case 'confirm': {
       const result = await api.confirm(id, fields);
-      return {message: result.state === 'paused' ? '源数据已变化，分群已暂停' : `运营已确认，派发 ${result.created_tasks} 项宣教任务`};
+      if (result.state === 'paused') return {message: '源数据已变化，分群已暂停'};
+      const waiting = result.waiting_tasks ? `，${result.waiting_tasks} 个点位因旧任务留在本批待派` : '';
+      return {message: `运营已确认，派发 ${result.created_tasks} 项宣教任务${waiting}`};
+    }
+    case 'recompute-dispatch':
+      await api.recomputeDispatch(id, fields);
+      return {message: '已按全批采样重算待派方案'};
+    case 'top-up-dispatch': {
+      const result = await api.topUpDispatch(id, fields);
+      const waiting = result.counts.pending ? `，${result.counts.pending} 个点位仍待旧任务结束` : '';
+      return {message: `补派 ${result.created} 项宣教任务${waiting}`};
     }
     case 'deliver':
       await api.deliver(id, fields);

@@ -7,6 +7,7 @@ function taskDetail(task) {
   const asOf = task.delivered_day ?? today();
   return `<div class="run-head">${paneHead(task.point_name, `任务 #${task.id} · 分群 #${task.run_id} / G${task.cohort} · 地址 V${task.point_revision}`)}${badge(task.state)}</div>
     <div class="assignment"><h3>${goalLabel(task.goal)} · ${labelSlot(task.focus_slot)}</h3><p>${goalAction(task.goal)}。</p></div>
+    ${task.dispatch_plan_version ? `<p class="aside-note">派发依据：待派方案 V${task.dispatch_plan_version} · 源数据 ${text((task.dispatch_fingerprint ?? '').slice(0, 12))} · 地址 V${task.point_revision}</p>` : ''}
     <div class="comparison"><div><span>基线 · ${task.baseline.total} 次观察</span><strong>${pct(baseline)}</strong></div>
     <div><span>复测 · ${task.retest_total} 次观察</span><strong>${task.result ? pct(task.result.retest_rate) : '未评估'}</strong></div></div>
     ${task.result ? `<p class="verdict">改善 ${task.result.gain_pp.toFixed(1)} 个百分点 · 目标 ${task.result.target_pp.toFixed(0)} 个百分点。${text(task.review_note)}</p>` : ''}

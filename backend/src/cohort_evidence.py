@@ -6,9 +6,15 @@ TASK_SELECT = '''SELECT t.*,p.code,p.name,p.revision,p.pending_location
 
 
 def evidence_for(ledger, task):
-    run = required(ledger, 'SELECT input_snapshot FROM behavior_runs WHERE id=%s', task['run_id'], '分群运行')
-    point = next(point for point in run['input_snapshot']['points'] if point['id'] == task['point_id'])
-    baseline = [row['id'] for row in point['windows'] if row['slot'] == task['focus_slot']]
+    """Baseline windows are frozen when the task is dispatched, not when the plan is recomputed."""
+    entry = ledger.one('''SELECT baseline_windows FROM dispatch_entries
+        WHERE run_id=%s AND point_id=%s AND task_id IS NOT NULL''', (task['run_id'], task['point_id']))
+    if entry and entry.get('baseline_windows'):
+        baseline = entry['baseline_windows']
+    else:
+        run = required(ledger, 'SELECT input_snapshot FROM behavior_runs WHERE id=%s', task['run_id'], '分群运行')
+        point = next(point for point in run['input_snapshot']['points'] if point['id'] == task['point_id'])
+        baseline = [row['id'] for row in point['windows'] if row['slot'] == task['focus_slot']]
     retest = task['result']['window_ids']
     sources = {window_id: 'baseline' for window_id in baseline} | {window_id: 'retest' for window_id in retest}
     ids = tuple(sources)

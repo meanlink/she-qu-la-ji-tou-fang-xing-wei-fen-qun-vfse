@@ -13,6 +13,7 @@ from starlette.concurrency import run_in_threadpool
 
 from scripts.seed_demo import seed
 from src.contracts import Delivery, Login, Note, RegisterPoint, Relocation, Role, RunRequest, Window
+from src import dispatch
 from src.fieldwork import add_point, add_window, propose_move, resolve_move
 from src.outreach import deliver, review_retest
 from src import quality, workflow_schema
@@ -168,14 +169,32 @@ def publish(run_id: int, form: Note, staff=Depends(operations)):
     return confirm_run(run_id, form, staff['username'])
 
 
+@app.get('/runs/{run_id}/dispatch')
+def dispatch_board(run_id: int, staff=Depends(signed_in)):
+    return dispatch.board(run_id)
+
+
+@app.post('/runs/{run_id}/dispatch/recompute')
+def recompute_dispatch(run_id: int, form: Note, staff=Depends(operations)):
+    return dispatch.recompute_plan(run_id, form, staff['username'])
+
+
+@app.post('/runs/{run_id}/dispatch/top-up')
+def top_up_dispatch(run_id: int, form: Note, staff=Depends(operations)):
+    return dispatch.dispatch_pending(run_id, form, staff['username'])
+
+
 @app.get('/tasks')
 def tasks(staff=Depends(signed_in)):
     with register() as ledger:
         return ledger.rows('''SELECT t.*,p.code,p.name AS point_name,r.through_day,p.pending_location,
             (SELECT COUNT(*) FROM sampling_windows w WHERE w.task_id=t.id) AS retest_windows,
-            COALESCE((SELECT SUM(w.total) FROM sampling_windows w WHERE w.task_id=t.id),0) AS retest_total
+            COALESCE((SELECT SUM(w.total) FROM sampling_windows w WHERE w.task_id=t.id),0) AS retest_total,
+            d.plan_version AS dispatch_plan_version,d.fingerprint AS dispatch_fingerprint
             FROM outreach_tasks t JOIN disposal_points p ON p.id=t.point_id
-            JOIN behavior_runs r ON r.id=t.run_id ORDER BY t.id DESC LIMIT 250''')
+            JOIN behavior_runs r ON r.id=t.run_id
+            LEFT JOIN dispatch_entries d ON d.run_id=t.run_id AND d.task_id=t.id
+            ORDER BY t.id DESC LIMIT 250''')
 
 
 @app.post('/tasks/{task_id}/delivery')

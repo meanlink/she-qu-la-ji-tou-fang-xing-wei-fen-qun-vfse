@@ -149,5 +149,15 @@ tr.selected { background: oklch(94% .049 122); }
 }
 @media (prefers-reduced-motion: reduce) { .view { animation: none; } }
 
+.dispatch-board { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 18px; }
+.dispatch-board .pane-head { margin-bottom: 10px; }
+.dispatch-actions { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+.dispatch-actions form { padding: 0; border: 0; margin: 0; }
+.dispatch-actions .aside-note { margin-top: 0; }
+.workflow-tag.dispatch-pending { background: var(--warm); color: var(--rust); border-color: var(--warm); }
+.workflow-tag.dispatch-dispatched { background: var(--leaf); color: var(--deep); border-color: var(--leaf); }
+.workflow-tag.dispatch-skipped { background: var(--paper); color: var(--muted); }
+@media (max-width: 930px) { .dispatch-actions { grid-template-columns: 1fr; } }
+
 .quality-form { display: grid; gap: 0.55rem; min-width: 11rem; max-width: 20rem; }
 .quality-form button { justify-self: start; }

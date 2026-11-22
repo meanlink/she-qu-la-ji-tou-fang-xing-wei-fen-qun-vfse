@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS dispatch_plans (
+    run_id INT NOT NULL,
+    version INT NOT NULL,
+    fingerprint CHAR(64) NOT NULL,
+    computed_by VARCHAR(40) NOT NULL,
+    computed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    plan JSON NOT NULL,
+    PRIMARY KEY (run_id,version),
+    FOREIGN KEY (run_id) REFERENCES behavior_runs(id),
+    FOREIGN KEY (computed_by) REFERENCES staff(username)
+) CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS dispatch_entries (
+    run_id INT NOT NULL,
+    point_id INT NOT NULL,
+    point_revision INT NOT NULL,
+    plan_version INT NOT NULL,
+    state ENUM('pending','dispatched','skipped') NOT NULL,
+    cohort INT,
+    goal ENUM('accuracy','overflow'),
+    focus_slot ENUM('morning','midday','evening'),
+    baseline JSON,
+    baseline_windows JSON,
+    fingerprint CHAR(64) NOT NULL,
+    reason_code VARCHAR(40),
+    reason VARCHAR(240),
+    task_id INT,
+    updated_by VARCHAR(40) NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (run_id,point_id),
+    FOREIGN KEY (run_id) REFERENCES behavior_runs(id),
+    FOREIGN KEY (point_id) REFERENCES disposal_points(id),
+    FOREIGN KEY (task_id) REFERENCES outreach_tasks(id),
+    FOREIGN KEY (updated_by) REFERENCES staff(username),
+    INDEX (point_id,state),
+    INDEX (run_id,state)
+) CHARACTER SET utf8mb4;
